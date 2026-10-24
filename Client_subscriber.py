@@ -1,5 +1,5 @@
 import asyncio
-import argparse
+import argparse,json
 
 parser = argparse.ArgumentParser(description="Client subscriber: Ricevi messaggi dai pubblisher sottoscrivendoti ad un topic")
 
@@ -7,14 +7,14 @@ parser = argparse.ArgumentParser(description="Client subscriber: Ricevi messaggi
 parser.add_argument("broker",help="indirizzo IP del broker")    
 parser.add_argument("topic",nargs = "+",help="topic a cui si riferisce il messaggio")   #Tramite narg posso far inserire più valori
                                                                                         #in questo modo il subscribing avviene su più topic
-parser.parse_args()
+args = parser.parse_args()
 
 PORTA = 5000
 broker = args.broker
 topics = args.topic
 
 async def main(broker,topics):
-    reader, writer = asyncio.open_connection(broker,PORTA)
+    reader, writer = await asyncio.open_connection(broker,PORTA)
 
     try: 
         for t in topics:
@@ -22,15 +22,21 @@ async def main(broker,topics):
             await writer.drain()
 
         while True:
-            dati = await reader.readLine()
+            dati = await reader.readline()
             if dati:
                 messaggio_pronto = json.loads(dati.decode())
-                print(f"MESSAGGIO RICEVUTO! : {messaggio_pronto[1]}, ottenuto dal TOPIC:{messaggio_pronto[0]} ")
+                print(f"MESSAGGIO RICEVUTO!: {messaggio_pronto["messaggio"]} ottenuto dal TOPIC:{messaggio_pronto["topic"]} ")
 
             else:
                 break
         
-        except ConnectionError, KeyboardInterrupt:
-            pass
-        finally:
-            writer.close()
+    except (ConnectionError, KeyboardInterrupt):
+        pass
+
+    finally:
+        writer.close()
+
+try:
+    asyncio.run(main(broker, topics))
+except KeyboardInterrupt:
+    print("Connessione chiusa")

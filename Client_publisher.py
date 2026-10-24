@@ -14,10 +14,10 @@ args = parser.parse_args()      #Faccio partire l'esecuzione del parser
 PORTA = 5000
 broker = args.broker
 topic = args.topic
-messaggio = argsm.messaggio
+messaggio = args.messaggio
 
 async def main(broker,topic,messaggio):
-    reader, writer = asyncio.open_connection(broker,PORTA)
+    reader, writer = await asyncio.open_connection(broker,PORTA)
 
     writer.write( (f"pub:{topic}:{messaggio}\n").encode() )
     await writer.drain()
