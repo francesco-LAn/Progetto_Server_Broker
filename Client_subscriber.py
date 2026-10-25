@@ -14,27 +14,33 @@ broker = args.broker
 topics = args.topic
 
 async def main(broker,topics):
-    reader, writer = await asyncio.open_connection(broker,PORTA)
+    try:                #Per provare la connessione al broker
+        reader, writer = await asyncio.open_connection(broker,PORTA)
+        print("IN ASCOLTO:")
 
-    try: 
-        for t in topics:
-            writer.write( (f"sub:{t}\n").encode() )     #Invio uno alla volta la sottoscrizzione ai vari topic
-            await writer.drain()
+        try: 
+            for t in topics:
+                writer.write( (f"sub:{t}\n").encode() )     #Invio uno alla volta la sottoscrizzione ai vari topic
+                await writer.drain()
 
-        while True:
-            dati = await reader.readline()
-            if dati:
-                messaggio_pronto = json.loads(dati.decode())
-                print(f"MESSAGGIO RICEVUTO!: {messaggio_pronto["messaggio"]} ottenuto dal TOPIC:{messaggio_pronto["topic"]} ")
+            while True:
+                dati = await reader.readline()
+                if dati:  #Se ricevo un dato effetivo, non byte vuoti
+                    messaggio_pronto = (json.loads(dati.decode()))          #Spacchetto e traduco il messaggio e lo stampo
+                    print(f"MESSAGGIO RICEVUTO!: {(messaggio_pronto['messaggio']).strip()} ottenuto dal TOPIC:{messaggio_pronto['topic']} ")
+                    # Indico anche il topic di riferimento nel caso in cui sia connesso a più topic insieme
+                else:
+                    break
+            
+        except (ConnectionError):
+            pass
 
-            else:
-                break
-        
-    except (ConnectionError, KeyboardInterrupt):
-        pass
+        finally:
+            print("connessione con il broker chiusa")
+            writer.close()
 
-    finally:
-        writer.close()
+    except ConnectionRefusedError:      #Altrimenti non è attivo
+        print("Broker non attivo")
 
 try:
     asyncio.run(main(broker, topics))

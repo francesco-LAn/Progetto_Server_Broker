@@ -22,12 +22,14 @@ class Broker:
 
                     elif messaggio_scomposto[0] == "pub":
                         await self.messaggio_x_pub(messaggio_scomposto)
-                    
 
-                else:
-                    break                               #Altrimenti esco ed eseguo il blocco finally
+                    else:
+                        raise IndexError                    
 
-        except (ConnectionError, KeyboardInterrupt):
+                else:                   #Non dovrebbe presentarsi come caso, ammeno che di dati trasmessi in modo errato, dato che pub e sub sono inseriti automaticamente e non dall'utente
+                    break                              
+
+        except (ConnectionError, KeyboardInterrupt):  #Altrimenti esco ed eseguo il blocco finally
             pass
 
         finally:
@@ -68,9 +70,7 @@ class Broker:
     async def messaggio_x_pub(self,lista_messaggio):
         topic = lista_messaggio[1]
         #Il messsaggio avrà ancora \n alla fine, va tolto per il confronto
-        topic.strip()
-        print(self.topics)
-        print(topic)
+        topic = topic.strip()
 
         #Il messaggio inviato ha una struttura precisa, una stringa fata come un dizionario
         messaggio_pronto = json.dumps({"topic":topic,"messaggio":lista_messaggio[2]})      
